@@ -1,4 +1,7 @@
 # Sharder
+
+[![Build Status](https://travis-ci.org/PlayerData/sharder.svg?branch=master)](https://travis-ci.org/PlayerData/sharder)
+
 Short description and motivation.
 
 ## Usage
