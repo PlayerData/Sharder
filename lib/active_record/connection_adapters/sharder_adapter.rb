@@ -8,7 +8,7 @@ module ActiveRecord
       attr_writer :database_name
 
       delegate :add_transaction_record, :case_sensitive_modifier, :select_all, :delete, :drop_table, :primary_keys,
-               :valid_type?, :insert, :update,
+               :valid_type?, :insert, :update, :create_database, :drop_database, :add_column, :remove_column,
                :type_cast, :to_sql, :quote, :quote_column_name, :quote_table_name, :indexes,
                :quote_table_name_for_assignment, :supports_migrations?, :tables, :table_alias_for,
                :table_exists?, :in_clause_length, :supports_ddl_transactions?, :columns,
@@ -19,13 +19,14 @@ module ActiveRecord
                :release_advisory_lock, :prepare_binds_for_database, :cacheable_query, :column_name_for_operation,
                :prepared_statements, :transaction_state, :create_table, to: :child_connection
 
-      delegate :connection_config, to: :connection_configurator
+      delegate :connection_config, to: :configurator
 
       def adapter_name
         ADAPTER_NAME
       end
 
       def database_name
+        return @connection[:database] if @database_name == :default
         @database_name || @connection[:database]
       end
 
@@ -33,20 +34,29 @@ module ActiveRecord
         pool = connection_pools[database_name]
         pool.automatic_reconnect = false
         pool.disconnect!
+        connection_pools.delete(database_name)
+      end
+
+      def configurator
+        @configurator ||= @connection[:connection_configurator].constantize.new
+      end
+
+      def database_exists?
+        child_connection
+      rescue ActiveRecord::NoDatabaseError
+        false
+      else
+        true
       end
 
       private
-
-      def connection_configurator
-        @connection_configurator ||= @connection[:connection_configurator].constantize.new
-      end
 
       def child_connection
         connection_pools[database_name].connection
       end
 
       def connection_pools
-        @connection_pools ||= Hash.new do |pools, database_name|
+        @@connection_pools ||= Hash.new do |pools, database_name|
           pools[database_name] = ConnectionHandler.new.establish_connection(
             connection_config(database_name)
           )

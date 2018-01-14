@@ -7,3 +7,7 @@ module ActiveRecord
     end
   end
 end
+
+ActiveRecord::Migration.prepend(Sharder::Migration)
+ActiveRecord::MigrationProxy.prepend(Sharder::MigrationProxy)
+ActiveRecord::Migrator.prepend(Sharder::Migrator)

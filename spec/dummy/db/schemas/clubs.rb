@@ -12,7 +12,7 @@
 
 ActiveRecord::Schema.define(version: 20180114122302) do
 
-  create_table "club_index", force: :cascade do |t|
+  create_table "staffs", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

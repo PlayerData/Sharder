@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
-require "rails/all"
-require "rspec/rails"
-
+ENV["RAILS_ENV"] ||= "test"
 require "dummy/config/environment"
 
-ActiveRecord::Migration.maintain_test_schema!
+require "spec_helper"
+require "rspec/rails"
 
-# set up db
-# be sure to update the schema if required by doing
-# - cd spec/rails_app
-# - rake db:migrate
+Dir[Rails.root.join("../support/**/*.rb")].each { |f| require f }
+
+ActiveRecord::Migration.maintain_test_schema!
 ActiveRecord::Schema.verbose = false
-load "dummy/db/schema.rb" # use db agnostic schema by default
