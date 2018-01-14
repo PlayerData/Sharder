@@ -24,6 +24,8 @@ class Sharder
         Sharder.using(shard_sample) do
           ActiveRecord::SchemaDumper.dump(connection, shard_schema_file)
         end
+
+        shard_schema_file.flush
       end
     end
   end
