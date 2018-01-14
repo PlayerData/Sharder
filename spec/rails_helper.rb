@@ -9,4 +9,3 @@ require "rspec/rails"
 Dir[Rails.root.join("../support/**/*.rb")].each { |f| require f }
 
 ActiveRecord::Migration.maintain_test_schema!
-ActiveRecord::Schema.verbose = false

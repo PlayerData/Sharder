@@ -26,13 +26,26 @@ class Sharder
         ActiveRecord::SchemaMigration.create_table
         ActiveRecord::InternalMetadata.create_table
 
-        load(Rails.root.join("db", "schemas", "#{shard_group}.rb"))
+        with_quiet_schemas do
+          load(Rails.root.join("db", "schemas", "#{shard_group}.rb"))
+        end
       end
     end
 
     def destroy
       ActiveRecord::Base.connection.disconnect_pool!(database_name)
       ActiveRecord::Base.connection.drop_database(database_name)
+    end
+
+    private
+
+    def with_quiet_schemas
+      was_verbose = ActiveRecord::Schema.verbose
+      ActiveRecord::Schema.verbose = false
+
+      yield
+
+      ActiveRecord::Schema.verbose = was_verbose
     end
   end
 end
