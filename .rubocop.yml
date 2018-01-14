@@ -1,0 +1,21 @@
+AllCops:
+  TargetRubyVersion: 2.4.1
+  Exclude:
+    - db/schema.rb
+    - db/schemas/*.rb
+
+Metrics/BlockLength:
+  Exclude:
+    - spec/**/*_spec.rb
+
+Metrics/LineLength:
+  Max: 120
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+Style/Documentation:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes

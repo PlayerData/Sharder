@@ -1,0 +1,12 @@
+default: &default
+  adapter: sharder
+  connection_configurator: ConnectionConfigurator
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+development:
+  <<: *default
+  database: sharder_dummy_development
+
+test:
+  <<: *default
+  database: sharder_dummy_test
