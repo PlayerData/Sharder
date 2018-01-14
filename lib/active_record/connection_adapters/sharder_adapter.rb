@@ -49,6 +49,14 @@ module ActiveRecord
         true
       end
 
+      def disconnect!
+        super
+
+        connection_pools.each_key do |database_name|
+          disconnect_pool!(database_name)
+        end
+      end
+
       private
 
       def child_connection
