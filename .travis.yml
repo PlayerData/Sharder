@@ -2,11 +2,18 @@ language: ruby
 cache: bundler
 rvm:
   - 2.4.1
+gemfile:
+  - gemfiles/rails_5_1.gemfile
+  - gemfiles/rails_5_2.gemfile
+services:
+  - postgresql
+
 script:
   - cd spec/dummy
   - bundle exec rails db:create
   - bundle exec rails db:schema:load
   - cd ../..
   - bundle exec rspec
-services:
-  - postgresql
+
+notifications:
+  email: false

@@ -1,5 +1,5 @@
 PATH
-  remote: .
+  remote: ..
   specs:
     sharder (0.0.1)
       rails (>= 5.1.0)
@@ -145,6 +145,7 @@ DEPENDENCIES
   byebug
   pg (~> 0.18)
   pry-byebug
+  rails (= 5.1.4)
   rspec-rails
   sharder!
 

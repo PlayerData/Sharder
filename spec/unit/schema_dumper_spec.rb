@@ -23,6 +23,13 @@ RSpec.describe Sharder::SchemaDumper do
     expect(File.exist?(default_schema_path)).to eq false
   end
 
+  private
+
+  def schema_version
+    return "20180114122302" if Rails::VERSION::MAJOR >= 5 && Rails::VERSION::MINOR < 2
+    "2018_01_14_122302"
+  end
+
   def club_schema
     <<~CLUB_SCHEMA
       # This file is auto-generated from the current state of the database. Instead
@@ -37,7 +44,7 @@ RSpec.describe Sharder::SchemaDumper do
       #
       # It's strongly recommended that you check this file into your version control system.
 
-      ActiveRecord::Schema.define(version: 20180114122302) do
+      ActiveRecord::Schema.define(version: #{schema_version}) do
 
         create_table "staffs", force: :cascade do |t|
           t.string "name"
