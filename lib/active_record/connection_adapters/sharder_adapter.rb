@@ -11,7 +11,7 @@ module ActiveRecord
                :valid_type?, :insert, :update, :create_database, :drop_database, :add_column, :remove_column,
                :type_cast, :to_sql, :quote, :quote_column_name, :quote_table_name, :indexes, :data_sources,
                :quote_table_name_for_assignment, :supports_migrations?, :tables, :table_alias_for, :truncate_table,
-               :enable_extension, :raw_connection,
+               :enable_extension, :raw_connection, :execute,
                :table_exists?, :in_clause_length, :supports_ddl_transactions?, :columns, :disable_referential_integrity,
                :sanitize_limit, :prefetch_primary_key?, :current_database, :initialize_schema_migrations_table,
                :combine_bind_parameters, :empty_insert_statement_value, :assume_migrated_upto_version,
