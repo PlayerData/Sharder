@@ -109,6 +109,29 @@ Sharder.using("database_name") do
 end
 ```
 
+### The `Sharder::Database` model
+
+Sharder defines a `Sharder::Database` model that aids in the creation and destruction of tenant databases.
+
+See `spec/dummy/app/models/club_index` for an example.
+
+```ruby
+shard_group = :clubs
+database = Sharder::Database.new(database_name, shard_group)
+
+# Create a database in the :clubs group, and load the db/schemas/clubs.rb schema
+database.create
+
+# Switch to the database
+database.switch do
+  # Do something in the database
+end
+
+# Destroy the database, closing any active connections from this
+# application instance
+database.destroy
+```
+
 ### Migrations
 
 When using the Sharder adapter, all migrations must belong to a `shard_group`.
