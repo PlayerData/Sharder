@@ -19,10 +19,11 @@ require "active_record/tasks/sharder_database_tasks"
 class Sharder
   class << self
     def using(database_name)
+      database_was = ActiveRecord::Base.connection.database_name
       ActiveRecord::Base.connection.database_name = database_name
       yield
     ensure
-      ActiveRecord::Base.connection.database_name = nil
+      ActiveRecord::Base.connection.database_name = database_was
     end
   end
 end

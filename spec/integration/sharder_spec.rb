@@ -35,9 +35,27 @@ RSpec.describe Sharder do
         staff.destroy
         expect { staff.reload }.to raise_error ActiveRecord::RecordNotFound
       end
+    end
 
-      club_index.database.destroy
-      club_index.destroy
+    it "correctly handles nested database switch calls" do
+      club_index = ClubIndex.create!(name: "Test")
+      club_index.database.create
+
+      club_index2 = ClubIndex.create!(name: "Test 2")
+      club_index2.database.create
+
+      club_index.database.switch do
+        club_index2.database.switch do
+          club2_staff = Staff.create!(name: "Club 2 Staff")
+          club2_staff.reload
+          expect(club2_staff.name).to eq "Club 2 Staff"
+        end
+
+        expect(Staff.count).to eq 0
+        club1_staff = Staff.create!(name: "Club 1 Staff")
+        club1_staff.reload
+        expect(club1_staff.name).to eq "Club 1 Staff"
+      end
     end
   end
 end
