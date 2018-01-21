@@ -26,8 +26,8 @@ RSpec.describe Sharder::SchemaDumper do
   private
 
   def schema_version
-    return "20180114122302" if Rails::VERSION::MAJOR >= 5 && Rails::VERSION::MINOR < 2
-    "2018_01_14_122302"
+    return "20180121174053" if Rails::VERSION::MAJOR >= 5 && Rails::VERSION::MINOR < 2
+    "2018_01_21_174053"
   end
 
   def club_schema
@@ -46,10 +46,22 @@ RSpec.describe Sharder::SchemaDumper do
 
       ActiveRecord::Schema.define(version: #{schema_version}) do
 
+        # These are extensions that must be enabled in order to support this database
+        enable_extension "plpgsql"
+
+        create_table "comments", force: :cascade do |t|
+          t.text "value"
+          t.bigint "staff_id"
+          t.datetime "created_at", null: false
+          t.datetime "updated_at", null: false
+          t.index ["staff_id"], name: "index_comments_on_staff_id"
+        end
+
         create_table "staffs", force: :cascade do |t|
           t.string "name"
           t.datetime "created_at", null: false
           t.datetime "updated_at", null: false
+          t.datetime "last_comment"
         end
 
       end

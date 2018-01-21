@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe Sharder do
+RSpec.describe "Database Switching" do
   describe "using the default database" do
     it "creates, updates, and destroys a model" do
       club_index = ClubIndex.create!(name: "Test")
