@@ -30,7 +30,7 @@ module ActiveRecord
       def sharder_connection
         Rails.application.initialize! unless Rails.application.initialized?
 
-        ActiveRecord::Base.establish_connection.connection
+        ActiveRecord::ConnectionAdapters::SharderAdapter.new(@task_database_configuration)
       end
 
       def connection_config

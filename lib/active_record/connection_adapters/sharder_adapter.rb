@@ -6,15 +6,18 @@ module ActiveRecord
       ADAPTER_NAME = "Sharder"
 
       attr_writer :database_name
-      attr_reader :abstract_instance
 
-      delegate :lease, :expire, :steal!, :in_use?, to: :abstract_instance
       delegate :connection_config, to: :configurator
+
+      attr_accessor :pool
+      attr_reader :abstract_instance
+      delegate :lease, :expire, :steal!, :in_use?, :owner,
+               to: :abstract_instance
 
       def initialize(connection, logger = nil, config = {})
         super()
 
-        @connection = connection
+        @connection = connection.with_indifferent_access
         @abstract_instance = ActiveRecord::ConnectionAdapters::AbstractAdapter.new(connection, logger, config)
       end
 
@@ -47,8 +50,6 @@ module ActiveRecord
       end
 
       def disconnect!
-        super
-
         connection_pools.each_key do |database_name|
           disconnect_pool!(database_name)
         end
