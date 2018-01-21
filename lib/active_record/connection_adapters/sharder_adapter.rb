@@ -2,25 +2,21 @@
 
 module ActiveRecord
   module ConnectionAdapters
-    class SharderAdapter < ActiveRecord::ConnectionAdapters::AbstractAdapter
+    class SharderAdapter
       ADAPTER_NAME = "Sharder"
 
       attr_writer :database_name
+      attr_reader :abstract_instance
 
-      delegate :add_transaction_record, :case_sensitive_modifier, :select_all, :delete, :drop_table, :primary_keys,
-               :valid_type?, :insert, :update, :create_database, :drop_database, :add_column, :remove_column,
-               :type_cast, :to_sql, :quote, :quote_column_name, :quote_table_name, :indexes, :data_sources,
-               :quote_table_name_for_assignment, :supports_migrations?, :tables, :table_alias_for, :truncate_table,
-               :enable_extension, :raw_connection, :execute,
-               :table_exists?, :in_clause_length, :supports_ddl_transactions?, :columns, :disable_referential_integrity,
-               :sanitize_limit, :prefetch_primary_key?, :current_database, :initialize_schema_migrations_table,
-               :combine_bind_parameters, :empty_insert_statement_value, :assume_migrated_upto_version,
-               :schema_cache, :substitute_at, :internal_string_options_for_primary_key, :lookup_cast_type_from_column,
-               :supports_advisory_locks?, :get_advisory_lock, :initialize_internal_metadata_table,
-               :release_advisory_lock, :prepare_binds_for_database, :cacheable_query, :column_name_for_operation,
-               :prepared_statements, :transaction_state, :create_table, to: :child_connection
-
+      delegate :lease, :expire, :steal!, :in_use?, to: :abstract_instance
       delegate :connection_config, to: :configurator
+
+      def initialize(connection, logger = nil, config = {})
+        super()
+
+        @connection = connection
+        @abstract_instance = ActiveRecord::ConnectionAdapters::AbstractAdapter.new(connection, logger, config)
+      end
 
       def adapter_name
         ADAPTER_NAME
@@ -56,6 +52,16 @@ module ActiveRecord
         connection_pools.each_key do |database_name|
           disconnect_pool!(database_name)
         end
+      end
+
+      def method_missing(method_name, *arguments, &block)
+        return super unless child_connection.respond_to?(method_name)
+
+        child_connection.send(method_name, *arguments, &block)
+      end
+
+      def respond_to_missing?(method_name, include_private = false)
+        child_connection.respond_to?(method_name, include_private)
       end
 
       private
