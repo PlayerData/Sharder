@@ -3,6 +3,9 @@
 module ActiveRecord
   module ConnectionAdapters
     class SharderAdapter
+      include ActiveSupport::Callbacks
+      define_callbacks :checkout, :checkin
+
       ADAPTER_NAME = "Sharder"
 
       attr_writer :database_name
@@ -11,8 +14,7 @@ module ActiveRecord
 
       attr_accessor :pool
       attr_reader :abstract_instance
-      delegate :lease, :expire, :steal!, :in_use?, :owner,
-               to: :abstract_instance
+      delegate :lease, :in_use?, :owner, :lock, to: :abstract_instance
 
       def initialize(connection, logger = nil, config = {})
         super()
@@ -30,13 +32,6 @@ module ActiveRecord
         @database_name || @connection[:database]
       end
 
-      def disconnect_pool!(database_name)
-        pool = connection_pools[database_name]
-        pool.automatic_reconnect = false
-        pool.disconnect!
-        connection_pools.delete(database_name)
-      end
-
       def configurator
         @configurator ||= @connection[:connection_configurator].constantize.new
       end
@@ -49,15 +44,28 @@ module ActiveRecord
         true
       end
 
+      def disconnect_pool!(database_name)
+        pool = connection_pools[database_name]
+        pool.automatic_reconnect = false
+        pool.disconnect!
+        connection_pools.delete(database_name)
+      end
+
       def disconnect!
-        connection_pools.each_key do |database_name|
-          disconnect_pool!(database_name)
-        end
+        disconnect_child_pools!
+      end
+
+      def expire
+        disconnect_child_pools!
+        abstract_instance.expire
+      end
+
+      def steal!
+        disconnect_child_pools!
+        abstract_instance.steal!
       end
 
       def method_missing(method_name, *arguments, &block)
-        return super unless child_connection.respond_to?(method_name)
-
         child_connection.send(method_name, *arguments, &block)
       end
 
@@ -66,6 +74,10 @@ module ActiveRecord
       end
 
       private
+
+      def disconnect_child_pools!
+        connection_pools.each_value(&:disconnect!)
+      end
 
       def child_connection
         connection_pools[database_name].connection
