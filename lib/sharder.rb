@@ -26,5 +26,14 @@ class Sharder
     ensure
       ActiveRecord::Base.connection.database_name = database_was
     end
+
+    def disconnect_from_database(database_name)
+      sharder_pool = ActiveRecord::Base.connection_handler.retrieve_connection_pool("primary")
+      sharder_pool.connections.each do |connection|
+        next unless connection.is_a? ActiveRecord::ConnectionAdapters::SharderAdapter
+
+        connection.disconnect_pool!(database_name)
+      end
+    end
   end
 end

@@ -33,7 +33,7 @@ class Sharder
     end
 
     def destroy
-      ActiveRecord::Base.connection.disconnect_pool!(database_name)
+      Sharder.disconnect_from_database(database_name)
       ActiveRecord::Base.connection.drop_database(database_name)
     end
 

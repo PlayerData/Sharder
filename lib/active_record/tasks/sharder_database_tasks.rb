@@ -12,12 +12,12 @@ module ActiveRecord
       end
 
       def drop
-        sharder_connection.disconnect_pool!(database_name)
+        Sharder.disconnect_from_database(database_name)
         DatabaseTasks.drop(connection_config)
       end
 
       def purge
-        sharder_connection.disconnect_pool!(database_name)
+        Sharder.disconnect_from_database(database_name)
         DatabaseTasks.purge(connection_config)
       end
 
