@@ -66,6 +66,7 @@ module ActiveRecord
       end
 
       def method_missing(method_name, *arguments, &block)
+        return super unless respond_to_missing?(method_name, true)
         child_connection.send(method_name, *arguments, &block)
       end
 
