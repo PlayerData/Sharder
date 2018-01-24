@@ -14,7 +14,8 @@ module ActiveRecord
 
       attr_accessor :pool
       attr_reader :abstract_instance
-      delegate :lease, :in_use?, :owner, :lock, to: :abstract_instance
+      delegate :lease, :in_use?, :owner, :lock, :seconds_idle, :close,
+               to: :abstract_instance
 
       def initialize(connection, logger = nil, config = {})
         super()
@@ -69,6 +70,10 @@ module ActiveRecord
           disconnect_child_pools!
           abstract_instance.steal!
         end
+      end
+
+      def active?
+        true
       end
 
       def method_missing(method_name, *arguments, &block)
