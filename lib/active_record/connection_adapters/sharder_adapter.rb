@@ -73,10 +73,20 @@ module ActiveRecord
 
       def connection_pools
         @@connection_pools ||= Hash.new do |pools, database_name|
-          pools[database_name] = ConnectionHandler.new.establish_connection(
-            connection_config(database_name)
+          pools[database_name] = ConnectionAdapters::ConnectionPool.new(
+            child_spec(database_name)
           )
         end
+      end
+
+      def child_spec(database_name)
+        spec = connection_config(database_name)
+
+        path_to_adapter = "active_record/connection_adapters/#{spec[:adapter]}_adapter"
+        require path_to_adapter
+
+        adapter_method = "#{spec[:adapter]}_connection"
+        ConnectionSpecification.new(database_name, spec, adapter_method)
       end
     end
   end
