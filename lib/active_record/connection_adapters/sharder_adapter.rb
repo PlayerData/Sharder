@@ -89,7 +89,7 @@ module ActiveRecord
       end
 
       def child_connection
-        ActiveSupport::Notifications.instrument "child_connection.sharder" do
+        ActiveSupport::Notifications.instrument "child_connection.sharder", database_name: database_name do
           connection_pools[database_name].connection
         end
       end
