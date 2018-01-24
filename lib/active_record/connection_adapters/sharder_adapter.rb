@@ -52,17 +52,23 @@ module ActiveRecord
       end
 
       def disconnect!
-        disconnect_child_pools!
+        ActiveSupport::Notifications.instrument "disconnect.sharder" do
+          disconnect_child_pools!
+        end
       end
 
       def expire
-        disconnect_child_pools!
-        abstract_instance.expire
+        ActiveSupport::Notifications.instrument "expire.sharder" do
+          disconnect_child_pools!
+          abstract_instance.expire
+        end
       end
 
       def steal!
-        disconnect_child_pools!
-        abstract_instance.steal!
+        ActiveSupport::Notifications.instrument "steal.sharder" do
+          disconnect_child_pools!
+          abstract_instance.steal!
+        end
       end
 
       def method_missing(method_name, *arguments, &block)
@@ -77,18 +83,24 @@ module ActiveRecord
       private
 
       def disconnect_child_pools!
-        connection_pools.each_value(&:disconnect!)
+        ActiveSupport::Notifications.instrument "disconnect_child_pools.sharder" do
+          connection_pools.each_value(&:disconnect!)
+        end
       end
 
       def child_connection
-        connection_pools[database_name].connection
+        ActiveSupport::Notifications.instrument "child_connection.sharder" do
+          connection_pools[database_name].connection
+        end
       end
 
       def connection_pools
         @connection_pools ||= Concurrent::Hash.new do |pools, database_name|
-          pools[database_name] = ConnectionAdapters::ConnectionPool.new(
-            child_spec(database_name)
-          )
+          ActiveSupport::Notifications.instrument "pool_initialization.sharder", database_name: database_name do
+            pools[database_name] = ConnectionAdapters::ConnectionPool.new(
+              child_spec(database_name)
+            )
+          end
         end
       end
 
