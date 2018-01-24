@@ -85,7 +85,7 @@ module ActiveRecord
       end
 
       def connection_pools
-        @@connection_pools ||= Hash.new do |pools, database_name|
+        @@connection_pools ||= Concurrent::Hash.new do |pools, database_name|
           pools[database_name] = ConnectionAdapters::ConnectionPool.new(
             child_spec(database_name)
           )
