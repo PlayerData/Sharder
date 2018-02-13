@@ -64,4 +64,42 @@ RSpec.describe Sharder::Migrator do
       raise_error ActiveModel::UnknownAttributeError
     )
   end
+
+  it "migrates a sharded database" do
+    class ValidMigration < ActiveRecord::Migration::Current
+      self.shard_group = :clubs
+
+      def change
+        add_column :staffs, :tests, :integer
+      end
+
+      def self.version
+        50_000_000_000_004
+      end
+    end
+
+    club_index = ClubIndex.create!(name: "Test")
+    club_index.database.create
+
+    ActiveRecord::Migrator.new(:up, [ValidMigration]).migrate
+    expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to exist
+
+    club_index.database.switch do
+      expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to exist
+
+      Staff.reset_column_information
+      Staff.create!(name: "Migration Test", tests: 2)
+    end
+
+    ActiveRecord::Migrator.new(:down, [ValidMigration]).migrate
+    expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to_not exist
+
+    club_index.database.switch do
+      expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to_not exist
+      Staff.reset_column_information
+      expect { Staff.create!(name: "Migration Test", tests: 2) }.to(
+        raise_error ActiveModel::UnknownAttributeError
+      )
+    end
+  end
 end

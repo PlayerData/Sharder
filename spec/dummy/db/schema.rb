@@ -12,6 +12,9 @@
 
 ActiveRecord::Schema.define(version: 20180121174053) do
 
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
+
   create_table "club_index", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false

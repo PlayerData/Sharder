@@ -30,6 +30,14 @@ RSpec.describe Sharder::Database do
         expect ActiveRecord::Base.connection.table_exists?("staffs")
       end
     end
+
+    it "records all migrations of the loaded schema" do
+      database.create
+      database.switch do
+        expect ActiveRecord::SchemaMigration.exists?(version: 20_180_121_174_053)
+        expect ActiveRecord::SchemaMigration.exists?(version: 20_180_121_173_910)
+      end
+    end
   end
 
   describe "destroying a shard" do
