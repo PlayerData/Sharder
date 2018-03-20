@@ -65,7 +65,7 @@ RSpec.describe Sharder::Migrator do
     )
   end
 
-  it "migrates a sharded database" do
+  it "migrates sharded databases" do
     class ValidMigration < ActiveRecord::Migration::Current
       self.shard_group = :clubs
 
@@ -81,25 +81,32 @@ RSpec.describe Sharder::Migrator do
     club_index = ClubIndex.create!(name: "Test")
     club_index.database.create
 
+    club_index2 = ClubIndex.create!(name: "Test 2")
+    club_index2.database.create
+
     ActiveRecord::Migrator.new(:up, [ValidMigration]).migrate
     expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to exist
 
-    club_index.database.switch do
-      expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to exist
+    [club_index, club_index2].each do |index|
+      index.database.switch do
+        expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to exist
 
-      Staff.reset_column_information
-      Staff.create!(name: "Migration Test", tests: 2)
+        Staff.reset_column_information
+        Staff.create!(name: "Migration Test", tests: 2)
+      end
     end
 
     ActiveRecord::Migrator.new(:down, [ValidMigration]).migrate
     expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to_not exist
 
-    club_index.database.switch do
-      expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to_not exist
-      Staff.reset_column_information
-      expect { Staff.create!(name: "Migration Test", tests: 2) }.to(
-        raise_error ActiveModel::UnknownAttributeError
-      )
+    [club_index, club_index2].each do |index|
+      index.database.switch do
+        expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to_not exist
+        Staff.reset_column_information
+        expect { Staff.create!(name: "Migration Test", tests: 2) }.to(
+          raise_error ActiveModel::UnknownAttributeError
+        )
+      end
     end
   end
 end

@@ -30,7 +30,17 @@ class Sharder
 
       return if database_names.include?(:default)
 
-      record_version_state_after_migrating(migration.version)
+      record_version_state_after_migrating(migration.version, include_cache: true)
+    end
+
+    def record_version_state_after_migrating(version, include_cache: false)
+      if down?
+        migrated.delete(version) if include_cache
+        ActiveRecord::SchemaMigration.where(version: version.to_s).delete_all
+      else
+        migrated << version if include_cache
+        ActiveRecord::SchemaMigration.create!(version: version.to_s)
+      end
     end
 
     def sharder_connection
