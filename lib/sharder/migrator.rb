@@ -70,6 +70,7 @@ class Sharder
         shards = configurator.database_names_for_shard_group(shard_group)
         shards.each do |shard|
           Sharder.using(shard) do
+            puts "=   Shard: #{shard}"
             yield shard_group
           end
         end

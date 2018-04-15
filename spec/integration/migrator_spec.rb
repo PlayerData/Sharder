@@ -132,6 +132,8 @@ RSpec.describe Sharder::Migrator do
           Staff.create!(name: "Migration Test", tests: 2)
         end
       end
+
+      ActiveRecord::Migrator.new(:down, [ShardMigration]).migrate
     end
   end
 end
