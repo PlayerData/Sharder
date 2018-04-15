@@ -44,8 +44,9 @@ class Sharder
 
     def migrate
       on_each_shard do |shard_group|
-        shard_migrations = @migrations.select { |m| m.shard_group == shard_group }
-        RailsMigrator.new(@direction, shard_migrations, @target_version).migrate
+        RailsMigrator.new(
+          @direction, shard_migrations(shard_group), shard_target(shard_group)
+        ).migrate
       end
 
       record_default_version_state_after_migrating
@@ -65,6 +66,20 @@ class Sharder
       raise NoShardGroupSpecifiedError if migrations.select { |m| m.shard_group.nil? }.any?
     end
 
+    def shard_migrations(shard_group)
+      @migrations.select { |m| m.shard_group == shard_group }
+    end
+
+    def shard_target(shard_group)
+      return if @target_version.nil?
+
+      shard_migrations(shard_group)
+        .sort_by(&:version)
+        .reverse
+        .find { |m| m.version <= @target_version }
+        .version
+    end
+
     def on_each_shard
       configurator.shard_groups.map do |shard_group|
         shards = configurator.database_names_for_shard_group(shard_group)
@@ -78,7 +93,7 @@ class Sharder
     end
 
     def record_default_version_state_after_migrating
-      @migrations.each do |migration|
+      @default_shard_migrator.runnable.each do |migration|
         if @direction == :down
           ActiveRecord::SchemaMigration.where(version: migration.version.to_s).delete_all
         else

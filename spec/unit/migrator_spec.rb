@@ -21,7 +21,7 @@ RSpec.describe Sharder::Migrator do
     end
 
     expect { ActiveRecord::Migrator.new(:up, [ShardNotSetMigration]).migrate }.to(
-      raise_error Sharder::Migrator::NoShardGroupSpecifiedError
+      raise_error ActiveRecord::Migrator::NoShardGroupSpecifiedError
     )
 
     expect(ActiveRecord::SchemaMigration.where(version: ShardNotSetMigration.version)).to_not exist
