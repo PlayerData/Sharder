@@ -22,6 +22,17 @@ class Sharder
     def create
       ActiveRecord::Base.connection.create_database(database_name, "encoding" => "unicode")
 
+      initialize_database
+    end
+
+    def destroy
+      Sharder.disconnect_from_database(database_name)
+      ActiveRecord::Base.connection.drop_database(database_name)
+    end
+
+    protected
+
+    def initialize_database
       switch do
         ActiveRecord::SchemaMigration.create_table
         ActiveRecord::InternalMetadata.create_table
@@ -30,11 +41,6 @@ class Sharder
           load(Rails.root.join("db", "schemas", "#{shard_group}.rb"))
         end
       end
-    end
-
-    def destroy
-      Sharder.disconnect_from_database(database_name)
-      ActiveRecord::Base.connection.drop_database(database_name)
     end
 
     private
