@@ -5,11 +5,11 @@ require "concurrent"
 
 require "sharder/version"
 
-require "sharder/database"
 require "sharder/migration_proxy"
 require "sharder/migration"
 require "sharder/migrator"
 require "sharder/schema_dumper"
+require "sharder/shard"
 
 require "sharder/railtie"
 require "sharder/extensions"
@@ -19,20 +19,20 @@ require "active_record/tasks/sharder_database_tasks"
 
 class Sharder
   class << self
-    def using(database_name)
-      database_was = ActiveRecord::Base.connection.database_name
-      ActiveRecord::Base.connection.database_name = database_name
+    def using(shard_name)
+      shard_was = ActiveRecord::Base.connection.shard_name
+      ActiveRecord::Base.connection.shard_name = shard_name
       yield
     ensure
-      ActiveRecord::Base.connection.database_name = database_was
+      ActiveRecord::Base.connection.shard_name = shard_was
     end
 
-    def disconnect_from_database(database_name)
+    def disconnect_from_shard(shard_name)
       sharder_pool = ActiveRecord::Base.connection_handler.retrieve_connection_pool("primary")
       sharder_pool.connections.each do |connection|
         next unless connection.is_a? ActiveRecord::ConnectionAdapters::SharderAdapter
 
-        connection.disconnect_pool!(database_name)
+        connection.disconnect_pool!(shard_name)
       end
     end
   end

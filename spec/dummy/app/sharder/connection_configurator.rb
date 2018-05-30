@@ -7,10 +7,10 @@ class ConnectionConfigurator
   #
   # This should return a HashWithIndifferentAccess which defines the
   # connection config for a database name.
-  def connection_config(database_name)
+  def connection_config(shard_name)
     {
       adapter: :postgresql,
-      database: database_name
+      database: shard_name
     }.with_indifferent_access
   end
 
@@ -23,10 +23,10 @@ class ConnectionConfigurator
 
   # For migration purposes, given a shard group name returns all known
   # databases that belong to that group
-  def database_names_for_shard_group(shard_group)
+  def shard_names_for_shard_group(shard_group)
     case shard_group
     when :clubs
-      club_database_names
+      club_shard_names
     when :default
       [:default]
     end
@@ -34,7 +34,7 @@ class ConnectionConfigurator
 
   private
 
-  def club_database_names
-    ClubIndex.all.map(&:database_name)
+  def club_shard_names
+    ClubIndex.all.map(&:shard_name)
   end
 end

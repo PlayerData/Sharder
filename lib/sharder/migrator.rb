@@ -5,7 +5,7 @@ class Sharder
     class NoShardGroupSpecifiedError < StandardError
       def to_s
         "
-        Each migration must specify a shard group so sharder knows which databases
+        Each migration must specify a shard group so sharder knows which shards
         the migrations should run on.
 
         class Migration < ActiveRecord::Migration[5.1]
@@ -21,14 +21,14 @@ class Sharder
       shard_group = migration.shard_group
       raise NoShardGroupSpecifiedError unless shard_group
 
-      database_names = configurator.database_names_for_shard_group(shard_group)
-      database_names ||= []
+      shard_names = configurator.shard_names_for_shard_group(shard_group)
+      shard_names ||= []
 
-      database_names.each do |database_name|
-        Sharder.using(database_name) { super }
+      shard_names.each do |shard_name|
+        Sharder.using(shard_name) { super }
       end
 
-      return if database_names.include?(:default)
+      return if shard_names.include?(:default)
 
       record_version_state_after_migrating(migration.version, include_cache: true)
     end

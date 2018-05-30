@@ -16,7 +16,7 @@ class Sharder
         schemas_dir = Rails.root.join("db", "schemas")
         FileUtils.mkdir_p(schemas_dir)
 
-        shard_sample = connection.configurator.database_names_for_shard_group(shard_group).sample
+        shard_sample = connection.configurator.shard_names_for_shard_group(shard_group).sample
         return unless shard_sample
 
         shard_schema_file = File.open(File.join(schemas_dir, "#{shard_group}.rb"), "w")

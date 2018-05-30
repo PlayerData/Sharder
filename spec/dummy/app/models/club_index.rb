@@ -3,11 +3,11 @@
 class ClubIndex < ApplicationRecord
   self.table_name = "club_index"
 
-  def database_name
+  def shard_name
     "sharder_dummy_#{Rails.env}_club_#{id}"
   end
 
-  def database
-    Sharder::Database.new(database_name, :clubs)
+  def shard
+    Sharder::Shard.new(shard_name, :clubs)
   end
 end

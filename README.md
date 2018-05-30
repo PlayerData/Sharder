@@ -13,8 +13,8 @@ requires knowledge of all databases when the application boots.
 While [Apartment](https://github.com/influitive/apartment) does handle dynamic
 connections, it doesn't allow different schema definitions for different databases.
 
-Inspired by Octopus' proxy model, Sharder defines an ActiveRecord adapter that proxies through to a child adapter. This allows us to (with few changes) have separate schemas for each of our database groups.
-However, Sharder configures child connections on demand without requiring prior knowledge of all shards, allowing us to create and destroy databases at run time.
+Inspired by Octopus' proxy model, Sharder defines an ActiveRecord adapter that proxies through to a child adapter. This allows us to (with few changes) have separate schemas for each of our shard groups.
+However, Sharder configures child connections on demand without requiring prior knowledge of all shards, allowing us to create and destroy shards at run time.
 
 Sharder is still in early stages of development, and will likely change
 significantly as we discover bugs and usability issues as we use it in our application. Use at your own risk!
@@ -34,7 +34,7 @@ significantly as we discover bugs and usability issues as we use it in our appli
   ```
 
 3)
-  Tell Rails to use sharder as the database adapter. Set `database` to the default database for your application
+  Tell Rails to use sharder as the database adapter. Set `database` to the default shard for your application
 
   ```yaml
   default: &default
@@ -59,15 +59,15 @@ significantly as we discover bugs and usability issues as we use it in our appli
 
   class ConnectionConfigurator
     # Connection config will be called when attempting to establish
-    # a connection with a database this instance of the application has
+    # a connection with a shard this instance of the application has
     # not seen before.
     #
     # This should return a HashWithIndifferentAccess which defines the
-    # connection config for a database name.
-    def connection_config(database_name)
+    # connection config for a shard name.
+    def connection_config(shard_name)
       {
         adapter: :postgresql,
-        database: database_name
+        database: shard_name
       }.with_indifferent_access
     end
 
@@ -79,11 +79,11 @@ significantly as we discover bugs and usability issues as we use it in our appli
     end
 
     # For migration purposes, given a shard group name returns all known
-    # databases that belong to that group
-    def database_names_for_shard_group(shard_group)
+    # shards that belong to that group
+    def shard_names_for_shard_group(shard_group)
       case shard_group
       when :clubs
-        club_database_names
+        club_shard_names
       when :default
         [:default]
       end
@@ -91,18 +91,18 @@ significantly as we discover bugs and usability issues as we use it in our appli
 
     private
 
-    def club_database_names
-      ClubIndex.all.map(&:database_name)
+    def club_shard_names
+      ClubIndex.all.map(&:shard_name)
     end
   end
   ```
 
 ## Usage
 
-### Switching databases
+### Switching shards
 
 ```ruby
-Sharder.using("database_name") do
+Sharder.using("shard_name") do
   model = SomeModel.create!
   model.reload
   # etc...
@@ -111,25 +111,25 @@ end
 
 ### The `Sharder::Database` model
 
-Sharder defines a `Sharder::Database` model that aids in the creation and destruction of tenant databases.
+Sharder defines a `Sharder::Database` model that aids in the creation and destruction of tenant shards.
 
 See `spec/dummy/app/models/club_index` for an example.
 
 ```ruby
 shard_group = :clubs
-database = Sharder::Database.new(database_name, shard_group)
+shard = Sharder::Shard.new(shard_name, shard_group)
 
-# Create a database in the :clubs group, and load the db/schemas/clubs.rb schema
-database.create
+# Create a shard in the :clubs group, and load the db/schemas/clubs.rb schema
+shard.create
 
-# Switch to the database
-database.switch do
-  # Do something in the database
+# Switch to the shard
+shard.switch do
+  # Do something in the shard
 end
 
-# Destroy the database, closing any active connections from this
+# Destroy the shard, closing any active connections from this
 # application instance
-database.destroy
+shard.destroy
 ```
 
 ### Migrations
@@ -155,9 +155,9 @@ class CreateStaffs < ActiveRecord::Migration[5.1]
 end
 ```
 
-All shards returned by `database_names_for_shard_group` in the configurator will have the migration applied on running `rails db:migrate`. The `schema_migrations` table in the default database will also be updated.
+All shards returned by `shard_names_for_shard_group` in the configurator will have the migration applied on running `rails db:migrate`. The `schema_migrations` table in the default shard will also be updated.
 
-After applying migrations, or when running `rails db:schema:dump`, a sample database from each schema group will be dumped. The default database is dumped to `db/schema.rb` as normal, with other shard groups being dumped to `db/schemas/<shard_group_name>.rb`.
+After applying migrations, or when running `rails db:schema:dump`, a sample shard from each schema group will be dumped. The default shard is dumped to `db/schema.rb` as normal, with other shard groups being dumped to `db/schemas/<shard_group_name>.rb`.
 
 ## Contributing
 

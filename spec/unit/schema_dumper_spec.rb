@@ -6,7 +6,7 @@ RSpec.describe Sharder::SchemaDumper do
   let(:schemas_dir) { Rails.root.join("db", "schemas") }
 
   it "dumps a schema for each shard group" do
-    ClubIndex.create!(name: "Test").database.create
+    ClubIndex.create!(name: "Test").shard.create
     clubs_schema_path = File.join(schemas_dir, "clubs.rb")
 
     FileUtils.rm(clubs_schema_path)

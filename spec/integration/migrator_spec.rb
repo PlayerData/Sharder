@@ -19,7 +19,7 @@ RSpec.describe Sharder::Migrator do
     expect(ActiveRecord::SchemaMigration.where(version: ShardNotSetMigration.version)).to_not exist
   end
 
-  it "does not error when no database names are returned by the configurator for a migration" do
+  it "does not error when no shard names are returned by the configurator for a migration" do
     class UnknownShardMigration < ActiveRecord::Migration::Current
       self.shard_group = :unknown_group
 
@@ -39,7 +39,7 @@ RSpec.describe Sharder::Migrator do
     expect(ActiveRecord::SchemaMigration.where(version: UnknownShardMigration.version)).to_not exist
   end
 
-  it "runs and rolls back a migration on for the default database" do
+  it "runs and rolls back a migration on for the default shard" do
     class ValidMigration < ActiveRecord::Migration::Current
       self.shard_group = :default
 
@@ -79,16 +79,16 @@ RSpec.describe Sharder::Migrator do
     end
 
     club_index = ClubIndex.create!(name: "Test")
-    club_index.database.create
+    club_index.shard.create
 
     club_index2 = ClubIndex.create!(name: "Test 2")
-    club_index2.database.create
+    club_index2.shard.create
 
     ActiveRecord::Migrator.new(:up, [ValidMigration]).migrate
     expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to exist
 
     [club_index, club_index2].each do |index|
-      index.database.switch do
+      index.shard.switch do
         expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to exist
 
         Staff.reset_column_information
@@ -100,7 +100,7 @@ RSpec.describe Sharder::Migrator do
     expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to_not exist
 
     [club_index, club_index2].each do |index|
-      index.database.switch do
+      index.shard.switch do
         expect(ActiveRecord::SchemaMigration.where(version: ValidMigration.version)).to_not exist
         Staff.reset_column_information
         expect { Staff.create!(name: "Migration Test", tests: 2) }.to(

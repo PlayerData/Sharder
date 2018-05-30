@@ -8,7 +8,7 @@ module ActiveRecord
 
       ADAPTER_NAME = "Sharder"
 
-      attr_writer :database_name
+      attr_writer :shard_name
 
       delegate :connection_config, to: :configurator
 
@@ -28,16 +28,16 @@ module ActiveRecord
         ADAPTER_NAME
       end
 
-      def database_name
-        return @connection[:database] if @database_name == :default
-        @database_name || @connection[:database]
+      def shard_name
+        return @connection[:database] if @shard_name == :default
+        @shard_name || @connection[:database]
       end
 
       def configurator
         @configurator ||= @connection[:connection_configurator].constantize.new
       end
 
-      def database_exists?
+      def shard_exists?
         child_connection
       rescue ActiveRecord::NoDatabaseError
         false
@@ -45,11 +45,11 @@ module ActiveRecord
         true
       end
 
-      def disconnect_pool!(database_name)
-        pool = connection_pools[database_name]
+      def disconnect_pool!(shard_name)
+        pool = connection_pools[shard_name]
         pool.automatic_reconnect = false
         pool.disconnect!
-        connection_pools.delete(database_name)
+        connection_pools.delete(shard_name)
       end
 
       def disconnect!
@@ -98,29 +98,29 @@ module ActiveRecord
       end
 
       def child_connection
-        ActiveSupport::Notifications.instrument "child_connection.sharder", database_name: database_name do
-          connection_pools[database_name].connection
+        ActiveSupport::Notifications.instrument "child_connection.sharder", shard_name: shard_name do
+          connection_pools[shard_name].connection
         end
       end
 
       def connection_pools
-        @connection_pools ||= Concurrent::Hash.new do |pools, database_name|
-          ActiveSupport::Notifications.instrument "pool_initialization.sharder", database_name: database_name do
-            pools[database_name] = ConnectionAdapters::ConnectionPool.new(
-              child_spec(database_name)
+        @connection_pools ||= Concurrent::Hash.new do |pools, shard_name|
+          ActiveSupport::Notifications.instrument "pool_initialization.sharder", shard_name: shard_name do
+            pools[shard_name] = ConnectionAdapters::ConnectionPool.new(
+              child_spec(shard_name)
             )
           end
         end
       end
 
-      def child_spec(database_name)
-        spec = connection_config(database_name)
+      def child_spec(shard_name)
+        spec = connection_config(shard_name)
 
         path_to_adapter = "active_record/connection_adapters/#{spec[:adapter]}_adapter"
         require path_to_adapter
 
         adapter_method = "#{spec[:adapter]}_connection"
-        ConnectionSpecification.new(database_name, spec, adapter_method)
+        ConnectionSpecification.new(shard_name, spec, adapter_method)
       end
     end
   end

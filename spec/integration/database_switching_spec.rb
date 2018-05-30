@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe "Database Switching" do
-  describe "using the default database" do
+  describe "using the default shard" do
     it "creates, updates, and destroys a model" do
       club_index = ClubIndex.create!(name: "Test")
       club_index.reload
@@ -18,12 +18,12 @@ RSpec.describe "Database Switching" do
     end
   end
 
-  describe "using another database" do
+  describe "using another shard" do
     it "creates, updates, and destroys a model" do
       club_index = ClubIndex.create!(name: "Test")
-      club_index.database.create
+      club_index.shard.create
 
-      club_index.database.switch do
+      club_index.shard.switch do
         staff = Staff.create!(name: "Staff")
         staff.reload
         expect(staff.name).to eq "Staff"
@@ -37,15 +37,15 @@ RSpec.describe "Database Switching" do
       end
     end
 
-    it "correctly handles nested database switch calls" do
+    it "correctly handles nested shard switch calls" do
       club_index = ClubIndex.create!(name: "Test")
-      club_index.database.create
+      club_index.shard.create
 
       club_index2 = ClubIndex.create!(name: "Test 2")
-      club_index2.database.create
+      club_index2.shard.create
 
-      club_index.database.switch do
-        club_index2.database.switch do
+      club_index.shard.switch do
+        club_index2.shard.switch do
           club2_staff = Staff.create!(name: "Club 2 Staff")
           club2_staff.reload
           expect(club2_staff.name).to eq "Club 2 Staff"
